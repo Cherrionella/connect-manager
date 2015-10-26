@@ -1,0 +1,28 @@
+{
+  "name": "uni-session",
+  "version": "1.0.0",
+  "description": "Universal simple session manager",
+  "main": "index.js",
+  "author": {
+    "name": "Aleksey Gorokhov",
+    "email": "gorokhov-dev@yandex.ru"
+  },
+  "license": "MIT",
+  "keywords": [
+    "session",
+    "session-manager"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Cherrionella/uni-session.git"
+  },
+  "homepage": "https://github.com/Cherrionella/uni-session",
+  "bugs": {
+    "url": "https://github.com/Cherrionella/uni-session/issues"
+  },
+  "dependencies": {
+    "async": "^1.5.0",
+    "lodash": "^3.10.1",
+    "session-storage": "^1.0.0"
+  }
+}
