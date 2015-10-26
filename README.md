@@ -1,9 +1,10 @@
 # connect-manager
-Universal simple session manager
+Universal simple connection manager and requests processor
 ---
-## TODO
 
----
+___(TODO)___
+
+
 ## The MIT License (MIT)
 
 Copyright (c) 2015 Aleksey Gorokhov
