@@ -1,3 +1,7 @@
-var SessionManager = require('./manager');
+var ConnectManager = require('./manager');
+var Constants = require('./constants');
 
-module.exports = SessionManager;
+module.exports = {
+    ConnectManager: ConnectManager,
+    Constants: Constants
+};

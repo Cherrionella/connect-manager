@@ -1,7 +1,7 @@
 {
-  "name": "uni-session",
+  "name": "connect-manager",
   "version": "1.0.0",
-  "description": "Universal simple session manager",
+  "description": "Universal simple connection manager and requests processor",
   "main": "index.js",
   "author": {
     "name": "Aleksey Gorokhov",
@@ -10,19 +10,25 @@
   "license": "MIT",
   "keywords": [
     "session",
-    "session-manager"
+    "session-manager",
+    "connect",
+    "manager",
+    "http",
+    "ws",
+    "websocket"
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Cherrionella/uni-session.git"
+    "url": "git+https://github.com/Cherrionella/connect-manager.git"
   },
-  "homepage": "https://github.com/Cherrionella/uni-session",
+  "homepage": "https://github.com/Cherrionella/connect-manager",
   "bugs": {
-    "url": "https://github.com/Cherrionella/uni-session/issues"
+    "url": "https://github.com/Cherrionella/connect-manager/issues"
   },
   "dependencies": {
     "async": "^1.5.0",
+    "deasync": "^0.1.3",
     "lodash": "^3.10.1",
-    "session-storage": "^1.0.0"
+    "session-storage": "^1.0.1"
   }
 }

@@ -1,8 +1,13 @@
-var util = require('util'),
+var _ = require('lodash'),
+    util = require('util'),
     EventEmitter = require('events'),
     crypto = require('crypto'),
-    _ = require('lodash');
+    Constants = require('./constants');
 
+function hasProperty(obj, prop) { Object.prototype.hasOwnProperty.call(obj, prop) }
+function isObjectLike(value) { return !!value && typeof value == 'object' }
+function isObject(value) { var type = typeof value; return !!value && (type == 'object' || type == 'function') }
+function isString(value) { return typeof value == 'string' || (isObjectLike(value) && Object.prototype.toString.call(value) == stringTag) }
 
 /**
  * Session object
@@ -21,11 +26,19 @@ var util = require('util'),
  * Note that right number can not exceed 1073741824 or 01111110 or 1<<126
  *
  *
+ * By default unsafeOwnership is false.
+ * Enable it only if you have 100% guarantee that nobody will change in storage `access` and `owner` fields.
+ * This can give you decent performance boost but you will lose safety, cause `hasAccess` and `hasAccessOrMe` methods
+ * will take locally stored data, otherwise they will ask storage for that
+ *
  * @constructor
  */
 function AbstractSession(params, storage) {
     this.timeout = params.timeout || 3600;
     this.storage = storage;
+    this.ownerIdField = params.ownerIdField || 'id';
+    this.sessionPrefix = params.sessionPrefix;
+    this.unsafeOwnership = !!params.unsafeOwnership;
     this.lastActive = 0;
 }
 
@@ -73,22 +86,44 @@ AbstractSession.prototype.purgeSessionSync = function() {
     return this.storage.purgeHashSync(this.id);
 };
 
+AbstractSession.prototype.expire = function(key, timeout, cb) {
+    this.storage.expire(key, timeout, cb);
+};
+
+AbstractSession.prototype.expireSync = function(key, timeout) {
+    return this.storage.expireSync(key, timeout);
+};
+
 AbstractSession.prototype.updateActivity = function() {
+    var self = this;
     this.lastActive = Date.now();
-    this._setSync(this.id + '_timeout', this.lastActive);
-    this.exipreSync(this.id + '_timeout', this.timeout);
+    var values = this.storage.getHValuesSync(this.id);
+    values = values || {};
+    values.lastActive = this.lastActive;
+    this.purgeSessionSync();
+    _.each(values, function(val, key) {
+        self.setSync(key, val);
+    });
+    this.expireSync(this.id, this.timeout);
     this.emit('update');
 };
 
 AbstractSession.prototype.isActive = function() {
-    return !!this._getSync(this.id + '_timeout');
+    return !!this.getSync(this.id, 'lastActive');
 };
 
 AbstractSession.prototype.start = function(id) {
-    this.id = id || crypto.randomBytes(16).toString('hex');
-    //Owner and access fields added here only to speedup base checks
-    this.owner = null;
-    this.access = null;
+    if(id) {
+        this.id = id;
+        this.owner = this.getSync('owner');
+        this.access = this.getSync('access');
+    } else {
+        this.id = this.sessionPrefix + '_' + crypto.randomBytes(16).toString('hex');
+        //Owner and access fields added here only to speedup base checks.
+        this.owner = null;
+        this.access = null;
+    }
+    this.updateActivity();
     this.emit('start', this.id);
 };
 
@@ -100,15 +135,17 @@ AbstractSession.prototype.stop = function() {
     this.emit('stop', this.id);
 };
 
-AbstractSession.prototype.setOwner = function(owner) {
+AbstractSession.prototype.setOwner = function(owner, suppressUpdate) {
     this.owner = owner;
-    this.setSync('owner', owner);
+    if(!suppressUpdate)
+        this.setSync('owner', owner);
     this.emit('owner', this.id, owner);
 };
 
-AbstractSession.prototype.setAccess = function(access) {
+AbstractSession.prototype.setAccess = function(access, suppressUpdate) {
     this.access = access;
-    this.setSync('access', access);
+    if(!suppressUpdate)
+        this.setSync('access', access);
     this.emit('access', this.id, access);
 };
 
@@ -119,16 +156,17 @@ AbstractSession.prototype.setAccess = function(access) {
  */
 AbstractSession.prototype.hasAccess = function(desired, strict) {
     //Corresponding to bitwise operations this results will be guaranteed
-    if(this.access == 0)
+    var access = this.unsafeOwnership ? this.access : this.getSync('access');
+    if(access == Constants.ACCESS.IS_GOD)
         return false;
-    if(this.access == -1)
+    if(access == Constants.ACCESS.IS_BANNED)
         return true;
     if(strict == null)
         strict = true;
     if(!_.isArray(desired))
         desired = [desired];
     var result = true;
-    var target = this.access;
+    var target = access;
     if(!strict)
         result = false;
     desired.forEach(function(right) {
@@ -148,7 +186,8 @@ AbstractSession.prototype.hasAccess = function(desired, strict) {
  * @param strict
  */
 AbstractSession.prototype.hasAccessOrMe = function(userId, desired, strict) {
-    if(this.owner == userId)
+    var owner = this.unsafeOwnership ? this.owner : this.getValueSync('owner');
+    if(owner == userId)
         return true;
     else
         return this.hasAccess(desired, strict);
