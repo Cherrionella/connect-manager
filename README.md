@@ -1,4 +1,4 @@
-# uni-session
+# connect-manager
 Universal simple session manager
 ---
 ## TODO
