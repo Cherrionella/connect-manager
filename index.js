@@ -1,7 +1,13 @@
-var ConnectManager = require('./manager');
-var Constants = require('./constants');
+var ConnectManager = require('./manager'),
+    Constants = require('./constants'),
+    AbstractSession = require('./session'),
+    Message = require('./message'),
+    WebSocketSession = require('./providers/websocket');
 
 module.exports = {
     ConnectManager: ConnectManager,
-    Constants: Constants
+    Constants: Constants,
+    Message: Message,
+    AbstractSession: AbstractSession,
+    WebSocketSession: WebSocketSession
 };
