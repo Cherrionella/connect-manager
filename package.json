@@ -1,6 +1,6 @@
 {
   "name": "connect-manager",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Universal simple connection manager and requests processor",
   "main": "index.js",
   "author": {
